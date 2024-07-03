@@ -4,7 +4,6 @@
 if ! command -v figlet &> /dev/null; then
     echo "figlet n'est pas installé. Installation ..."
     sudo apt-get install -y figlet > /dev/null
-    exit 1
 fi
 
 # Afficher le nom du script en grand
@@ -43,9 +42,9 @@ read -p "Entrez le nom de votre interface réseau: " interface_name
 gateway=$(extract_network "$ip_address")
 
 # Recherche du fichier de configuration Netplan
-config_file=$(find /etc/netplan -name "*config*.yaml")
+config_file=$(find /etc/netplan -name "*.yaml")
 
-if [ -z "$config_file" ]; alors
+if [ -z "$config_file" ]; then
   echo "Fichier de configuration Netplan non trouvé."
   exit 1
 fi
@@ -68,7 +67,7 @@ EOL
 
 # Appliquer la configuration Netplan
 netplan apply
-if [ $? -ne 0 ]; alors
+if [ $? -ne 0 ]; then
   echo "Erreur : impossible d'appliquer la configuration Netplan."
   exit 1
 fi
