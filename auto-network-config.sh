@@ -84,7 +84,7 @@ while true; do
     gateway=$(extract_network "$ip_address")
 
     # Ajouter ou modifier la configuration de l'interface au contenu YAML
-    yaml_content+="    $interface_name:\n      dhcp4: false\n      addresses:\n        - $ip_address\n      routes:\n        - to: default\n          via: $gateway\n      nameservers:\n        addresses: [8.8.8.8, 8.8.4.4]\n"
+    yaml_content+="    $interface_name:\n      dhcp4: false\n      addresses:\n        - $ip_address\n      nameservers:\n        addresses: [8.8.8.8, 8.8.4.4]\n"
   elif [ "$config_type" == "dhcp" ]; then
     # Ajouter ou modifier la configuration de l'interface au contenu YAML
     yaml_content+="    $interface_name:\n      dhcp4: true\n"
@@ -121,4 +121,4 @@ while true; do
   fi
 done
 
-echo "La configuration réseau a été mise à jour, appliquée et les passerelles sont joignables."
+echo "La configuration réseau a été mise à jour, appliquée et les interfaces sont configurées."
