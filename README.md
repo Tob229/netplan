@@ -20,6 +20,12 @@ Clonez le dépôt Git :
 cd netplan && chmod +x auto-network-config.sh
 ```
 
+## Vider le contenu de votre fichier yaml  :
+
+```bash
+sudo echo " " > /etc/netplan/*.yaml
+```
+
 ## Exécutez le script avec les privilèges administratifs :
 
 ```bash
