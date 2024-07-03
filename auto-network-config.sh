@@ -8,7 +8,7 @@ if ! command -v figlet &> /dev/null; then
 fi
 
 # Afficher le nom du script en grand
-figlet "AUTO NETWORK CONFIG"
+figlet "AUTO NETWORK"
 
 # Fonction pour extraire l'adresse réseau
 extract_network() {
