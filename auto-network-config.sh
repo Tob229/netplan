@@ -2,7 +2,8 @@
 
 # Vérifier si figlet est installé
 if ! command -v figlet &> /dev/null; then
-    echo "figlet n'est pas installé. Installez-le avec 'sudo apt-get install figlet'."
+    echo "figlet n'est pas installé. Installation ..."
+    sudo apt-get install -y figlet > /dev/null
     exit 1
 fi
 
