@@ -35,6 +35,11 @@ check_gateway_connectivity() {
   fi
 }
 
+# Fonction pour vérifier si une interface existe
+interface_exists() {
+  ip link show | grep -q "$1:"
+}
+
 # Fonction pour vérifier si une interface est déjà configurée
 is_interface_configured() {
   grep -q "$1:" "$config_file"
@@ -59,8 +64,15 @@ yaml_content="network:\n  version: 2\n  ethernets:\n"
 while true; do
   # Demande du nom de l'interface réseau
   read -p "Entrez le nom de votre interface réseau (ou appuyez sur Entrée pour terminer): " interface_name
+  
   if [ -z "$interface_name" ]; then
     break
+  fi
+
+  # Vérifier si l'interface existe
+  if ! interface_exists "$interface_name"; then
+    echo "Erreur : l'interface $interface_name n'existe pas. Veuillez vérifier le nom et réessayer."
+    continue
   fi
 
   if is_interface_configured "$interface_name"; then
