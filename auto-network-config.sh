@@ -50,6 +50,25 @@ get_existing_interface_config() {
   grep -A5 "$1:" "$config_file" | grep -E 'addresses:|dhcp4:|routes:|nameservers:' | sed 's/^[ \t]*//'
 }
 
+# Fonction pour vérifier la validité de l'adresse IP
+validate_ip() {
+  local ip=$1
+  local stat=1
+  if [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$ ]]; then
+    IFS='/' read -r addr mask <<< "$ip"
+    IFS='.' read -r -a octets <<< "$addr"
+    if [[ ${octets[0]} -le 255 && ${octets[1]} -le 255 && ${octets[2]} -le 255 && ${octets[3]} -le 255 && $mask -le 32 ]]; then
+      stat=0
+    fi
+  fi
+  return $stat
+}
+
+# Fonction pour lister les interfaces réseau disponibles
+list_network_interfaces() {
+  ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -v '^lo$'
+}
+
 # Recherche du fichier de configuration Netplan
 config_file=$(find /etc/netplan -name "*.yaml")
 
@@ -58,8 +77,18 @@ if [ -z "$config_file" ]; then
   exit 1
 fi
 
-# Initialiser le contenu du fichier YAML
-yaml_content="network:\n  version: 2\n  ethernets:\n"
+# Lire le contenu actuel du fichier YAML
+yaml_content=$(cat "$config_file")
+
+# Initialiser le contenu du fichier YAML s'il est vide
+if [ -z "$yaml_content" ]; then
+  yaml_content="network:\n  version: 2\n  ethernets:\n"
+fi
+
+# Afficher les interfaces disponibles au démarrage du script
+echo "Interfaces réseau disponibles :"
+list_network_interfaces
+echo -e "\n\n"
 
 while true; do
   # Demande du nom de l'interface réseau
@@ -85,21 +114,33 @@ while true; do
     if [ "$modify" != "o" ]; then
       continue
     fi
+
+    # Supprimer l'ancienne configuration de l'interface
+    yaml_content=$(echo "$yaml_content" | sed "/$interface_name:/,/^$/d")
   fi
 
   # Choix entre configuration statique et DHCP
   read -p "Choisissez le type de configuration pour $interface_name (statique/dhcp): " config_type
   if [ "$config_type" == "statique" ]; then
-    read -p "Entrez votre adresse IP (format: xxx.xxx.xxx.xxx/xx): " ip_address
+    while true; do
+      read -p "Entrez votre adresse IP (format: xxx.xxx.xxx.xxx/xx): " ip_address
+
+      # Vérifier la validité de l'adresse IP
+      if validate_ip "$ip_address"; then
+        break
+      else
+        echo "Erreur : Adresse IP invalide. Veuillez entrer une adresse IP valide au format xxx.xxx.xxx.xxx/xx."
+      fi
+    done
 
     # Calcul de la passerelle
     gateway=$(extract_network "$ip_address")
 
     # Ajouter ou modifier la configuration de l'interface au contenu YAML
-    yaml_content+="    $interface_name:\n      dhcp4: false\n      addresses:\n        - $ip_address\n      nameservers:\n        addresses: [8.8.8.8, 8.8.4.4]\n"
+    yaml_content=$(echo -e "$yaml_content" | sed "/ethernets:/a \    $interface_name:\n      dhcp4: false\n      addresses:\n        - $ip_address\n      nameservers:\n        addresses: [8.8.8.8, 8.8.4.4]")
   elif [ "$config_type" == "dhcp" ]; then
     # Ajouter ou modifier la configuration de l'interface au contenu YAML
-    yaml_content+="    $interface_name:\n      dhcp4: true\n"
+    yaml_content=$(echo -e "$yaml_content" | sed "/ethernets:/a \    $interface_name:\n      dhcp4: true")
   else
     echo "Configuration invalide. Veuillez entrer 'statique' ou 'dhcp'."
     continue
