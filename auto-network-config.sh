@@ -212,14 +212,17 @@ while true; do
       echo ""
       echo "Interfaces réseau disponibles :"
       list_network_interfaces
-      echo -e "\n\n"
+      echo -e "\n"
       ;;
     2)
       configure_new_interface
+      echo -e "\n"
       save_and_apply_configuration
+      echo -e "\n"
       ;;
     3)
       check_existing_interface
+      echo -e "\n"
       ;;
     4)
       echo ""
